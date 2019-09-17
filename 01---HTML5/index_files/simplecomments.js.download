@@ -1,0 +1,130 @@
+// JavaScript Document
+// variables:
+		var id,delField,delForm,edForm,otherField,collapseField;
+		var idArray = [];
+		var adminHeight = 0;
+
+/* function declarations: */
+		var scrollio = function(){
+			//parse uri
+			var url = window.location.href;
+			var urlArray = url.split('/');
+			var internalLink = urlArray[urlArray.length-1];
+			//if there's an internal comments link in the URL, scroll to it
+			if(internalLink.indexOf('#comment')>=0){
+				//does target actually exist?
+				if(jQuery(internalLink).length>0){
+					jQuery('html,body').animate({
+						scrollTop: jQuery(internalLink).offset().top-adminHeight
+					},500);
+
+				}
+			}
+		}
+jQuery(document).ready(function(){
+
+		var clipboard = new ClipboardJS('.copy-link')
+
+		clipboard.on('success', function(e) {
+			jQuery(e.trigger).html("<span class='copied-text'>Copied!</span>");
+			e.clearSelection();
+			setTimeout(function() {
+				jQuery(e.trigger).html('<a href="javascript:void(0)" title="copy this comment link"><span class="sr-only">comment link</span><i class="mdl2 mdl2-link" aria-hidden="true"></i></a>');
+			}, 2500);
+		});
+
+		//is there an admin bar?
+		if(jQuery('#wpadminbar').height()>0){
+			adminHeight = jQuery('#wpadminbar').height();
+		}
+
+		//commentsMargintop();
+		setTimeout(commentsMargintop, 10);
+
+		/* button listeners:	*/
+		// Main comment / reply dialog
+		jQuery("#respond h3#reply-title").click(function(){
+			jQuery(this).toggleClass('comment-form-active');
+			jQuery('.editor-open').removeClass('editor-open').slideUp();
+			jQuery('.comment-text-hidden').removeClass('comment-text-hidden').slideDown();
+			jQuery("#commentform").toggle().toggleClass('editor-open');
+			jQuery('.editor-open .wp-editor-area').focus();
+			setTimeout(commentsMargintop, 10);
+		})
+		jQuery(".reply .comment-reply-link").click(function(){
+			jQuery("#respond textarea.wp-editor-area").val('');
+			jQuery('#reply-title').click();
+		})
+		// Delete button
+			jQuery(".delete-btn").click(function(){
+				id = jQuery(this).attr("id");
+				idArray = id.split('-');
+				id = idArray[2];
+				delField = "#delete-comment-"+id;
+				delForm = "form#sc-comment-edit-"+id + " #submit";
+				//this is where we would place the confirmation modal
+				var really =confirm("Are you sure you wish to delete this comment?");
+				if(really){
+					jQuery(delField).val('1');
+					jQuery(delForm).click();
+				}
+			});
+			// Edit
+			jQuery(".edit-btn").click(function(){
+				id = jQuery(this).attr("id");
+				idArray = id.split('-');
+				id = idArray[2];
+				edForm = "form#sc-comment-edit-"+id;
+				otherField = "#comment-text-"+id;
+				jQuery(edForm).toggle('slow',function(){
+					jQuery(edForm+ " textarea.wp-editor-area").focus();
+					jQuery('.editor-open').not(this).removeClass('editor-open').slideUp();
+					jQuery('.comment-text-hidden').removeClass('comment-text-hidden').slideDown();
+					jQuery('h3#reply-title').removeClass('comment-form-active');
+					jQuery(edForm).toggleClass('editor-open');
+				});
+				jQuery(otherField).toggle('slow',function(){
+					jQuery(otherField).toggleClass('comment-text-hidden');
+				});
+			});
+			jQuery(".edit-cancel").click(function(){
+				id = jQuery(this).attr("id");
+				idArray = id.split('-');
+				id = idArray[2];
+				jQuery("#edit-btn-"+id).click();
+		 	});
+			//Reply Cancel
+			jQuery(".btn#cancel-comment-form").click(function(){
+				//use the DOM click event, the jQuery one doesn't work on links
+				jQuery("#cancel-comment-reply-link")[0].click();
+				jQuery("#respond textarea.wp-editor-area").val('');
+	 			return false;
+	 		});
+			// Collapse
+			jQuery(".collapse-comment").click(function(){
+				jQuery(this).toggleClass('upside-down');
+				id = jQuery(this).attr("id");
+				idArray = id.split('-');
+				id = idArray[2];
+				collapseField = "#li-comment-"+id+" ul.children";
+				collapseField += ", #comment-text-"+id;
+				collapseField += ", #li-comment-"+id+" footer";
+				jQuery(collapseField).toggle(400,function(){
+
+				});
+				jQuery("#li-comment-"+id).toggleClass("clearfix");
+			});
+
+		//detect scroll:
+		scrollio();
+	});
+function commentsMargintop() {
+	jQuery('#respond textarea.wp-editor-area').focus();
+	var replyHeight = jQuery("#comments.comments-area > #respond").innerHeight();
+
+	if(jQuery("#comments.comments-area > nav#comment-nav-above").length){
+		jQuery("#comments.comments-area > nav#comment-nav-above").css("margin-top", replyHeight+10+"px");
+	}  else if(jQuery("#comments.comments-area > .commentlist").length) {
+		jQuery("#comments.comments-area > .commentlist").css("margin-top", replyHeight+10+"px");
+	}
+}
